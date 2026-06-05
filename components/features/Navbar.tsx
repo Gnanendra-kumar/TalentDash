@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: "/salaries", label: "Salaries" },
   { href: "/companies", label: "Companies" },
   { href: "/compare", label: "Compare" },
+  { href: "/tools", label: "Tools" },
 ] as const;
 
 export function Navbar() {
