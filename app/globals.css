@@ -1,26 +1,163 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ──────────────────────────────────────────────
+   TalentDash — Design System Tokens
+   Tailwind v4 @theme configuration
+   ────────────────────────────────────────────── */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* ─── Color System ─────────────────────────── */
+  --color-coral: #FF5A5F;
+  --color-coral-hover: #E04E53;
+  --color-deep-text: #222222;
+  --color-body-text: #484848;
+  --color-muted-text: #717171;
+  --color-surface: #FFFFFF;
+  --color-app-bg: #F7F7F7;
+  --color-border: #EBEBEB;
+  --color-success: #008A05;
+  --color-warning: #FFB400;
+  --color-error: #D93025;
+  --color-hover-surface: #F2F2F2;
+  --color-data-blue: #0369A1;
+
+  /* ─── Font ─────────────────────────────────── */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ──────────────────────────────────────────────
+   Base Styles
+   ────────────────────────────────────────────── */
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #F7F7F7;
+  color: #222222;
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+/* ─── Selection ──────────────────────────────── */
+::selection {
+  background-color: #FF5A5F;
+  color: #FFFFFF;
+}
+
+/* ─── Focus ring ─────────────────────────────── */
+:focus-visible {
+  outline: 2px solid #FF5A5F;
+  outline-offset: 2px;
+}
+
+/* ─── Scrollbar (subtle) ─────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #EBEBEB;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #717171;
+}
+
+/* ══════════════════════════════════════════════
+   Hero Section — Light data-focused surface
+   ══════════════════════════════════════════════ */
+
+.hero-section {
+  background-color: var(--color-app-bg);
+  position: relative;
+}
+
+.hero-grid-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.3;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.74) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.74) 1px, transparent 1px);
+  background-size: 64px 64px;
+  pointer-events: none;
+}
+
+.hero-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(255,90,95,0.14), transparent 32%),
+              radial-gradient(circle at bottom left, rgba(3,105,161,0.08), transparent 28%);
+  pointer-events: none;
+}
+
+.hero-visual {
+  position: relative;
+}
+
+.hero-visual::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: 32px;
+  background: linear-gradient(180deg, rgba(255,90,95,0.12), rgba(3,105,161,0.08));
+}
+
+/* ─── Grain Overlay ──────────────────────────── */
+.grain-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  pointer-events: none;
+}
+
+/* ─── Gradient Text ──────────────────────────── */
+.hero-gradient-text {
+  background: linear-gradient(135deg, #FF5A5F 0%, #FF8A8D 50%, #FF5A5F 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 4s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ─── Stat Card ──────────────────────────────── */
+.stat-card {
+  transition: all 0.3s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── CTA Section ────────────────────────────── */
+.cta-section {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 60%, #0f172a 100%);
+}
+.cta-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background-image: radial-gradient(circle at top left, rgba(255,90,95,0.24), transparent 22%),
+                    radial-gradient(circle at bottom right, rgba(3,105,161,0.18), transparent 18%);
+  pointer-events: none;
 }
