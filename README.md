@@ -1,20 +1,109 @@
 # TalentDash
 
-TalentDash is a compensation intelligence dashboard built for India’s salary market. It surfaces live salary benchmarks, company salary distributions, and role-level comparisons using Next.js, Neon PostgreSQL, and Prisma.
+> Structured Data → Comparable Insights → Better Decisions
+
+Unlike traditional review platforms, TalentDash focuses on normalized compensation data that can be filtered, compared, and analyzed across companies, locations, and experience levels. The goal is to provide decision-ready compensation intelligence rather than unstructured opinion-based content.
+
+The platform is built with a static-first mindset inspired by large-scale SEO products such as Levels.fyi, enabling fast page delivery, reduced infrastructure costs, and improved discoverability through search engines.
 
 ## Live Demo
 
-- https://talentdash-alpha.vercel.app/
+- **https://talentdash-alpha.vercel.app/**
+
+## Product Vision
+
+TalentDash is built to make compensation data immediately useful:
+- benchmark current pay against market data
+- inspect company-level salary distributions
+- compare offer details side-by-side
+- calculate net salary and post-hike pay using built-in tools
+
+## Navigation & Experience
+
+The application navigation includes the following key sections:
+
+- **Home** — live salary hero panel and quick snapshot of benchmark data
+- **Salaries** — paginated salary listing with filters and search-ready UI
+- **Companies** — list of companies and dedicated company detail pages
+- **Compare** — side-by-side salary comparison engine
+- **Tools** — salary tax calculator and hike calculator for decision support
 
 ## Features
 
-- Live salary benchmarking panel on the homepage
-- Salary listing with pagination, filtering, and sorting
-- Company pages with median compensation and level distribution
-- Side-by-side salary comparison view
-- API ingestion endpoint for secure salary submissions
-- Responsive, production-ready UI built with Tailwind CSS
-- Neon PostgreSQL backend with Prisma ORM and serverless compatibility
+- Live compensation dashboard with median salary, top company, level, and location
+- Salary records with pagination and filtering
+- Company pages showing median compensation and level distribution
+- Compare view for direct salary record analysis
+- Tools page for Salary & Tax calculation and Hike estimation
+- API ingestion endpoint for salary records
+- Responsive UI powered by Tailwind CSS
+- Serverless-friendly Neon PostgreSQL backend via Prisma
+
+## System Architecture
+
+```
+User
+ │
+ ▼
+Next.js Application
+ │
+ ├── React Server Components
+ ├── Static & ISR Pages
+ ├── API Routes
+ │
+ ▼
+Prisma ORM
+ │
+ ▼
+Neon PostgreSQL
+```
+
+The frontend consumes data through typed API routes and server-side database queries. Prisma provides schema-driven access to the database while Neon PostgreSQL offers a scalable serverless database layer suitable for modern deployment platforms.
+
+## Architecture Summary
+
+TalentDash is designed for fast, data-driven page delivery with a modern full-stack approach:
+
+- **ISR + static** for high-performance pages
+- **Dynamic API routes** for live data ingestion and query operations
+- **Prisma ORM** for schema-driven database access
+- **Neon Postgres** for serverless-compatible production data
+- **Tailwind CSS** for consistent styling and layout speed
+
+## Project Structure
+
+- `app/` — page routes, API route definitions, and layout
+- `components/` — reusable UI, navigation, and domain components
+- `lib/` — helper utilities, formatters, and query utilities
+- `prisma/` — schema, migration history, and seed scripts
+- `public/` — static assets
+- `types/` — shared TypeScript type definitions
+
+## Data Flow
+
+```
+Salary Submission
+       │
+       ▼
+Validation Layer
+       │
+       ▼
+Company Normalization
+       │
+       ▼
+Total Compensation Calculation
+       │
+       ▼
+Database Storage
+       │
+       ▼
+Salary APIs
+       │
+       ▼
+UI Rendering
+```
+
+All salary records are validated before persistence. Compensation values are calculated server-side to maintain consistency and prevent incorrect client submissions.
 
 ## Tech Stack
 
@@ -30,122 +119,153 @@ TalentDash is a compensation intelligence dashboard built for India’s salary m
 - Prisma 7
 - Neon PostgreSQL via `@neondatabase/serverless`
 - `@prisma/adapter-neon`
-- Next.js API routes for ingestion and data queries
+- Next.js API routes for data ingestion and query handling
 
 ### Deployment
 
 - Vercel recommended
-- Local development with `npm run dev`
+- Build command: `npx prisma generate && npm run build`
+- Environment variable: `DATABASE_URL`
 
-## Project Structure
+## Navigation Structure
 
-- `app/` — Next.js App Router pages and API routes
-- `components/` — reusable UI and feature components
-- `lib/` — utilities, database helpers, and filter logic
-- `prisma/` — Prisma schema, migrations, and seed scripts
-- `public/` — static assets
-- `types/` — shared TypeScript types
+The application currently exposes five primary sections:
 
-## Getting Started
+### Home
 
-### 1. Clone the repository
+Provides a high-level overview of the platform along with compensation benchmarks and platform statistics.
 
-```bash
-git clone https://github.com/Gnanendra-kumar/TalentDash.git
-cd TalentDash
-npm install
-```
+### Salaries
 
-### 2. Set environment variables
+Core compensation exploration experience featuring filtering, sorting, pagination, and compensation breakdowns.
 
-Create a `.env` file in the project root with:
+### Companies
 
-```env
-DATABASE_URL="postgresql://neondb_owner:YOUR_PASSWORD@YOUR_HOST.neon.tech/neondb?sslmode=require"
-```
+Dedicated company pages containing compensation insights, salary distributions, and company-specific analytics.
 
-### 3. Generate Prisma client and migrate
+### Compare
 
-```bash
-npx prisma generate
-npx prisma migrate dev --name init
-npx prisma db seed
-```
+Allows side-by-side comparison of compensation records to assist users during offer evaluation and salary negotiations.
 
-### 4. Run locally
+### Tools
 
-```bash
-npm run dev
-```
+Practical compensation planning utilities including:
 
-Visit `http://localhost:3000` to verify the app.
+- Salary & Tax Calculator
+- Hike Calculator
 
-## Database Schema
+These tools complement the research experience by helping users evaluate real-world salary outcomes.
 
-TalentDash models the salary data with two core entities: `Company` and `Salary`.
+## SEO Strategy
 
-### Company
+SEO is treated as a first-class concern throughout the application.
 
-- `id`: UUID primary key
-- `name`: company display name
-- `slug`: URL-safe company identifier
-- `normalizedName`: lowercase dedupe key
-- `industry`: company industry
-- `headquarters`: company headquarters
-- `foundedYear`: optional founded year
-- `headcountRange`: optional employee count range
-- `createdAt`, `updatedAt`
+Implemented optimizations include:
 
-### Salary
+- Dynamic metadata generation
+- Canonical URLs
+- Open Graph support
+- Structured JSON-LD data
+- Semantic heading hierarchy
+- Static page generation where possible
+- ISR for frequently updated content
 
-- `id`: UUID primary key
-- `companyId`: foreign key to `Company`
-- `role`: job title
-- `level`: compensation level enum
-- `location`: city or region
-- `currency`: enum (`INR`, `USD`, `GBP`, `EUR`)
-- `experienceYears`: years of experience
-- `baseSalary`, `bonus`, `stock`, `totalCompensation`
-- `source`: enum (`CONTRIBUTOR`, `SCRAPED`, `AI_INFERRED`)
-- `confidenceScore`: decimal trust score
-- `isVerified`: boolean flag
-- `submittedAt`: datetime
+This approach improves discoverability while maintaining fast page loads.
 
-### Relationship
+## API Overview
 
-- `Company` has many `Salary`
-- `Salary` belongs to `Company`
+### POST /api/ingest-salary
+
+Creates new salary records after validation and normalization.
+
+Responsibilities:
+
+- Field validation
+- Compensation calculation
+- Duplicate prevention
+- Data normalization
+
+### GET /api/salaries
+
+Supports:
+
+- Company filtering
+- Role filtering
+- Level filtering
+- Location filtering
+- Pagination
+- Sorting
+
+### GET /api/companies/[slug]
+
+Returns:
+
+- Company metadata
+- Compensation statistics
+- Salary records
+- Level distribution
+
+### GET /api/compare
+
+Returns two salary records and their compensation differences for direct comparison.
+
+## Performance Strategy
+
+TalentDash is optimized for responsiveness and scalability.
+
+Key optimizations:
+
+- React Server Components
+- Incremental Static Regeneration
+- Server-side database queries
+- Optimized Prisma queries
+- Database indexing
+- Minimal client-side JavaScript
+- Responsive layouts
+
+These decisions reduce bundle size while maintaining a smooth user experience.
 
 ## Architecture Decisions
 
-- **App Router**: uses Next.js App Router for modern page and API route handling.
-- **ISR**: most pages use Incremental Static Regeneration to balance speed and freshness.
-- **Dynamic API routes**: handle realtime salary ingestion and data retrieval.
-- **Prisma + Neon**: chosen for type-safe database access and serverless DB compatibility.
-- **Tailwind CSS**: used for fast, consistent styling without heavy CSS configuration.
+### Why Neon PostgreSQL?
 
-## Performance Optimizations
+Neon provides a serverless PostgreSQL experience that integrates naturally with Prisma while reducing operational overhead.
 
-- Edge caching and `stale-while-revalidate` for salary API endpoints
-- ISR for homepage, `/salaries`, `/companies`, and compare views
-- Database indexes on common filter/sort fields
-- Minimal client-side logic on static pages for faster load times
+### Why Prisma?
 
-## Future Improvements
+Prisma enables type-safe database access, migration management, and maintainable schema evolution.
 
-- Add authentication and API keys for salary ingestion
-- Implement on-demand ISR invalidation after new salary submissions
-- Add search autocomplete for company and role lookup
-- Build an admin moderation dashboard for submitted salary data
-- Add cursor-based pagination for larger datasets
-- Add analytics, monitoring, and production CI checks
+### Why Next.js App Router?
+
+The App Router enables React Server Components, nested layouts, streaming, and modern rendering strategies suitable for data-intensive applications.
+
+### Why Tailwind CSS?
+
+Tailwind accelerates UI development while maintaining consistency across components without introducing large UI framework dependencies.
+
+## Trade-Offs & Scope Decisions
+
+Given the limited trial timeline, development effort was prioritized toward:
+
+- Core salary intelligence features
+- Database integration
+- Compensation comparison
+- Filtering and pagination
+- SEO foundations
+
+Features intentionally left for future iterations include:
+
+- Authentication
+- Community discussions
+- Review submissions
+- Interview experiences
+- Workplace Index rankings
+- Administrative moderation dashboards
+
+This ensured the core user journey remained complete and production-ready.
 
 ## Author
 
 - **Gnanendra Kumar Pendyala**
 
-## Notes
 
-- Keep `.env` private and do not commit it.
-- Update the live demo URL if the deployment changes.
-- If you add tests later, include a test section in this README.
