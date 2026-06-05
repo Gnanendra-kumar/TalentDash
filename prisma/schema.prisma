@@ -7,6 +7,8 @@ generator client {
   provider = "prisma-client-js"
 }
 
+
+// Datasource is configured via `prisma.config.ts` (Prisma v7+).
 datasource db {
   provider = "postgresql"
 }

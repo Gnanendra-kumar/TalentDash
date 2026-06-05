@@ -1,27 +1,70 @@
 /* ──────────────────────────────────────────────
-   /companies — Company listing page
-   Queries real database for all companies with
-   computed stats (median TC, record count, roles).
-   
-   ISR: revalidates every 3600s (1 hour).
+   /companies — Company listing page (redesigned)
+   Features: Search, Popular/AI/Indian company grids,
+   funding stage pills, compare section, explore section.
    ────────────────────────────────────────────── */
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import CompanyLogo, { LogoImg } from "@/components/ui/CompanyLogo";
 import { prisma } from "@/lib/db";
 import { safeQuery } from "@/lib/safe-query";
-import { formatCurrency } from "@/lib/utils";
 
-export const revalidate = 3600; // ISR: revalidate every 1 hour
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Companies",
   description:
-    "Browse salary data by company. See compensation stats for Google, Amazon, Meta, Microsoft, NVIDIA, and more.",
+    "Search companies to explore salaries, benefits, and more. Browse popular companies, top AI companies, and top Indian companies.",
 };
 
+/* ── Company brand colors for logo backgrounds ── */
+const COMPANY_COLORS: Record<string, { bg: string; text: string }> = {
+  Google: { bg: "#4285F4", text: "#FFF" },
+  Amazon: { bg: "#FF9900", text: "#FFF" },
+  Apple: { bg: "#000000", text: "#FFF" },
+  Microsoft: { bg: "#00A4EF", text: "#FFF" },
+  Meta: { bg: "#0668E1", text: "#FFF" },
+  Netflix: { bg: "#E50914", text: "#FFF" },
+  Adobe: { bg: "#FF0000", text: "#FFF" },
+  Salesforce: { bg: "#00A1E0", text: "#FFF" },
+  Infosys: { bg: "#007CC3", text: "#FFF" },
+  TCS: { bg: "#2B2D42", text: "#FFF" },
+  IBM: { bg: "#054ADA", text: "#FFF" },
+  Oracle: { bg: "#F80000", text: "#FFF" },
+  SAP: { bg: "#0FAAFF", text: "#FFF" },
+  HCL: { bg: "#0073CF", text: "#FFF" },
+  Wipro: { bg: "#44125C", text: "#FFF" },
+  NVIDIA: { bg: "#76B900", text: "#FFF" },
+  Flipkart: { bg: "#2874F0", text: "#FFF" },
+  Razorpay: { bg: "#3395FF", text: "#FFF" },
+  Swiggy: { bg: "#FC8019", text: "#FFF" },
+  Zomato: { bg: "#E23744", text: "#FFF" },
+};
+
+const FUNDING_STAGES = ["Pre-Seed", "Seed", "Series A", "Series B", "Series C", "Series D", "Series E+", "Post IPO"];
+
+const EXPLORE_CATEGORIES = [
+  { title: "Top paying companies", count: "8,245", color: "#FF5A5F" },
+  { title: "Remote friendly companies", count: "2,930", color: "#3B82F6" },
+  { title: "Highly rated companies", count: "6,511", color: "#10B981" },
+  { title: "Fast growing companies", count: "4,100", color: "#F97316" },
+  { title: "Product based companies", count: "5,832", color: "#8B5CF6" },
+  { title: "AI & tech companies", count: "1,620", color: "#EC4899" },
+];
+
+const COMPARE_PAIRS = [
+  { a: "Google", b: "Meta", desc: "Compensation & Benefits" },
+  { a: "Amazon", b: "Microsoft", desc: "Career Growth" },
+  { a: "TCS", b: "Infosys", desc: "Salaries & Benefits" },
+  { a: "Apple", b: "Google", desc: "Culture & Work-Life" },
+];
+
+function getCompanyColor(name: string) {
+  return COMPANY_COLORS[name] || { bg: "#F7F7F7", text: "#484848" };
+}
+
 export default async function CompaniesPage() {
-  /* ── Fetch all companies with salary data ───── */
   const dbCompanies = await safeQuery(
     () => prisma.company.findMany({
       include: {
@@ -34,7 +77,6 @@ export default async function CompaniesPage() {
     []
   );
 
-  /* ── Compute per-company stats ─────────────── */
   const companyStats = dbCompanies.map((company) => {
     const tcValues = company.salaries
       .map((s) => Number(s.totalCompensation))
@@ -49,91 +91,183 @@ export default async function CompaniesPage() {
           : tcValues[mid];
     }
 
-    const recordCount = company.salaries.length;
-    const roles = new Set(company.salaries.map((s) => s.role)).size;
-
-    return { company, median, recordCount, roles };
+    return { company, median, recordCount: company.salaries.length };
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#222222] sm:text-3xl">
-          Companies
+    <>
+      {/* ── Hero ───────────────────────────────── */}
+      <div className="companies-hero">
+        <div className="companies-hero-label">Companies</div>
+        <h1>
+          Search for <span>Company</span>
         </h1>
-        <p className="mt-1 text-sm text-[#717171]">
-          Browse salary data across {dbCompanies.length} companies
+        <p style={{ color: "#717171", fontSize: 14, marginTop: 8 }}>
+          Search companies to explore salaries, benefits, and more.
         </p>
-      </div>
-
-      {dbCompanies.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#F7F7F7]">
-            <svg className="h-8 w-8 text-[#717171]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
-            </svg>
-          </div>
-          <h3 className="text-base font-semibold text-[#222222]">No companies yet</h3>
-          <p className="mt-1 text-sm text-[#717171]">Run <code className="rounded bg-[#F7F7F7] px-1.5 py-0.5 text-xs">npx prisma db seed</code> to populate the database.</p>
+        <div className="company-search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#717171" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <input type="text" placeholder="Search for a company..." />
         </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {companyStats.map(({ company, median, recordCount, roles }) => (
-          <Link
-            key={company.id}
-            href={`/companies/${company.slug}`}
-            className="group flex flex-col rounded-2xl border border-[#EBEBEB] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-[#FF5A5F]/30"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F7F7F7] text-lg font-bold text-[#484848] transition-colors group-hover:bg-[#FF5A5F]/10 group-hover:text-[#FF5A5F]">
-                {company.name.charAt(0)}
-              </div>
-              <div>
-                <h2 className="text-base font-semibold text-[#222222] group-hover:text-[#FF5A5F] transition-colors">
-                  {company.name}
-                </h2>
-                <span className="text-xs text-[#717171]">
-                  {company.industry}
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-5 grid grid-cols-3 gap-3 border-t border-[#EBEBEB] pt-4">
-              <div>
-                <p className="text-xs font-medium text-[#717171]">Median TC</p>
-                <p className="mt-0.5 text-sm font-bold text-[#0369A1]">
-                  {formatCurrency(median, "INR")}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-[#717171]">Records</p>
-                <p className="mt-0.5 text-sm font-bold text-[#222222]">
-                  {recordCount}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-[#717171]">Roles</p>
-                <p className="mt-0.5 text-sm font-bold text-[#222222]">
-                  {roles}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center gap-3 text-xs text-[#717171]">
-              <span className="flex items-center gap-1">
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                </svg>
-                {company.headquarters}
-              </span>
-              <span>·</span>
-              <span>{company.headcountRange ?? "—"}</span>
-            </div>
-          </Link>
-        ))}
       </div>
-    </div>
+
+      {/* ── Popular Companies ──────────────────── */}
+      <div className="company-grid-section mx-auto max-w-6xl">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div className="company-grid-title">Popular Companies</div>
+          <Link href="/companies" className="view-all-link">View all companies →</Link>
+        </div>
+        <div className="company-grid">
+          {companyStats.length > 0 ? (
+            companyStats.map(({ company }) => {
+              const colors = getCompanyColor(company.name);
+              return (
+                <Link key={company.id} href={`/companies/${company.slug}`} className="company-chip">
+                  <CompanyLogo
+                    slug={company.slug}
+                    name={company.name}
+                    bg={colors.bg}
+                    text={colors.text}
+                  />
+                  <span className="company-chip-name">{company.name}</span>
+                  <svg className="company-chip-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </Link>
+              );
+            })
+          ) : (
+            /* Fallback popular companies */
+            ["Google", "Amazon", "Apple", "Microsoft", "Meta", "Netflix", "Adobe", "Salesforce", "Infosys", "TCS", "IBM", "Oracle"].map((name) => {
+              const colors = getCompanyColor(name);
+              return (
+                <div key={name} className="company-chip" style={{ cursor: "default" }}>
+                  <div className="company-chip-logo" style={{ background: colors.bg, color: colors.text }}>
+                    {name.charAt(0)}
+                  </div>
+                  <span className="company-chip-name">{name}</span>
+                  <svg className="company-chip-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* ── Startups by Funding Stage ──────────── */}
+      <div className="company-grid-section mx-auto max-w-6xl">
+        <div className="company-grid-title">Startups by Funding Stage</div>
+        <div className="funding-pills">
+          {FUNDING_STAGES.map((stage) => (
+            <button key={stage} className="funding-pill">{stage}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Compare Section ────────────────────── */}
+      <div className="compare-section">
+        <div className="mx-auto max-w-6xl">
+          <h2>Compare companies. Make <strong>better</strong> career moves.</h2>
+          <p style={{ color: "#717171", fontSize: 14, marginTop: 8, maxWidth: 520, marginLeft: "auto", marginRight: "auto" }}>
+            Compare salaries, benefits, culture, growth and more to find the right workplace for you.
+          </p>
+
+          <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 24, marginBottom: 8 }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, border: "2px dashed #EBEBEB", display: "flex", alignItems: "center", justifyContent: "center", color: "#AFAFAF", fontSize: 24 }}>+</div>
+            <div style={{ display: "flex", alignItems: "center", fontWeight: 700, color: "#717171", fontSize: 14 }}>vs</div>
+            <div style={{ width: 56, height: 56, borderRadius: 16, border: "2px dashed #EBEBEB", display: "flex", alignItems: "center", justifyContent: "center", color: "#AFAFAF", fontSize: 24 }}>+</div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+            <Link href="/compare" className="view-all-link">View all comparisons →</Link>
+          </div>
+
+          <div className="compare-grid" style={{ textAlign: "left" }}>
+            {COMPARE_PAIRS.map((pair) => {
+              const colA = getCompanyColor(pair.a);
+              const colB = getCompanyColor(pair.b);
+              return (
+                <Link key={`${pair.a}-${pair.b}`} href="/compare" className="compare-card">
+                  <div className="compare-card-logos">
+                    <LogoImg slug={pair.a.toLowerCase()} name={pair.a} size={32} />
+                    <span className="compare-card-vs">vs</span>
+                    <LogoImg slug={pair.b.toLowerCase()} name={pair.b} size={32} />
+                  </div>
+                  <div className="compare-card-title">{pair.a} vs {pair.b}</div>
+                  <div className="compare-card-subtitle">{pair.desc}</div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Explore Section ────────────────────── */}
+      <div className="explore-section mx-auto max-w-6xl">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <span className="placeholder-badge" style={{ marginTop: 0, marginBottom: 12, display: "inline-flex" }}>Discover companies</span>
+            <h2 style={{ fontSize: 24, fontWeight: 800, color: "#222", letterSpacing: "-0.02em" }}>
+              Explore companies your way
+            </h2>
+            <p style={{ fontSize: 14, color: "#717171", marginTop: 4 }}>
+              Find the right companies based on what matters to you.
+            </p>
+          </div>
+          <Link href="/companies" className="view-all-link">View all companies →</Link>
+        </div>
+
+        <div className="explore-categories">
+          {EXPLORE_CATEGORIES.map((cat) => (
+            <div key={cat.title} className="explore-category-card">
+              <h3>{cat.title}</h3>
+              <p>{cat.count} companies</p>
+              <div className="explore-category-bar" style={{ background: cat.color }} />
+            </div>
+          ))}
+        </div>
+
+        {/* Quick ways to explore */}
+        <div style={{ marginTop: 40 }}>
+          <div className="company-grid-title">Quick ways to explore</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12, marginTop: 16 }}>
+            {[
+              { label: "By experience", sub: "Internship to Leadership", icon: "📊" },
+              { label: "By location", sub: "Top cities & remote", icon: "📍" },
+              { label: "By company size", sub: "Start-ups to enterprises", icon: "🏢" },
+              { label: "By industry", sub: "Tech, Finance, Healthcare & more", icon: "🏭" },
+              { label: "By rating", sub: "4★ & above companies", icon: "⭐" },
+              { label: "By funding stage", sub: "Pre-seed to Unicorn", icon: "💰" },
+              { label: "By known for", sub: "Benefits, Culture & more", icon: "🎯" },
+              { label: "By badges", sub: "Verified & featured", icon: "🏅" },
+            ].map((item) => (
+              <div key={item.label} className="company-chip" style={{ cursor: "pointer" }}>
+                <span style={{ fontSize: 18 }}>{item.icon}</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#222" }}>{item.label}</div>
+                  <div style={{ fontSize: 11, color: "#717171" }}>{item.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── CTA Banner ─────────────────────────── */}
+      <div style={{ margin: "32px", padding: "20px 24px", background: "#FFF0F0", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: "calc(100% - 64px)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF5A5F" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <span style={{ fontSize: 13, color: "#484848" }}>
+            Not sure where to start? Check out our <strong>Top 50 Highest paying companies in India</strong>
+          </span>
+        </div>
+      </div>
+    </>
   );
 }

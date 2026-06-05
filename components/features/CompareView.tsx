@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Salary, Currency } from "@/types";
 import { Badge } from "@/components/ui/Badge";
@@ -31,7 +31,11 @@ export function CompareView({ salaries }: CompareViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [id1, setId1] = useState(searchParams.get("s1") ?? "");
+  const companyParam = searchParams.get("company");
+  const initialId1 =
+    searchParams.get("s1") ??
+    (companyParam ? salaries.find((s) => s.company_slug === companyParam)?.id ?? "" : "");
+  const [id1, setId1] = useState(initialId1);
   const [id2, setId2] = useState(searchParams.get("s2") ?? "");
   const [currency] = useState<Currency>("INR");
 
@@ -52,17 +56,7 @@ export function CompareView({ salaries }: CompareViewProps) {
     [router]
   );
 
-  /* ── Pre-select from company page ─────────── */
-  useEffect(() => {
-    const companyParam = searchParams.get("company");
-    if (companyParam && !id1) {
-      const first = salaries.find((s) => s.company_slug === companyParam);
-      if (first) {
-        setId1(first.id);
-        updateURL(first.id, id2);
-      }
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  /* Pre-selection handled during initial state to avoid setState in effects */
 
   /* ── Build comparison rows ─────────────────── */
   function buildRows(): ComparisonRow[] {
